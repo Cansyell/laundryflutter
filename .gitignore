@@ -1,0 +1,106 @@
+# Flutter & Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+generated_plugin_registrant.dart
+
+# Android
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/key.properties
+**/android/.idea/
+**/android/app/release/
+**/android/app/debug/
+**/android/app/profile/
+
+# iOS
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/build/
+**/ios/Runner.xcworkspace/
+**/ios/Runner.xcodeproj/project.xcworkspace/
+**/ios/.generated/
+**/ios/.dart_tool/
+**/ios/.idea/
+
+# macOS
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/Flutter-Debug.xcconfig
+**/macos/Flutter/Flutter-Release.xcconfig
+**/macos/Flutter/Flutter-Profile.xcconfig
+**/macos/build/
+**/macos/Pods/
+**/macos/.symlinks/
+
+# Windows
+**/windows/flutter/ephemeral/
+**/windows/build/
+
+# Web
+**/web/.dart_tool/
+**/web/.idea/
+**/web/.vscode/
+
+# Visual Studio Code
+.vscode/
+.idea/
+*.iml
+
+# Xcode
+DerivedData/
+*.xcworkspace
+*.xcuserstate
+*.xcuserdatad
+*.moved-aside
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Intellij
+*.iws
+*.ipr
+
+# Logs
+*.log
+*.tmp
+*.swp
+*.lock
+
+# Others
+pubspec.lock
+.env
+*.DS_Store
+*.class
+*.jar
+*.war
+*.apk
+*.aar
+*.ipa
+*.jks
+
+# Firebase / Google Services
+**/google-services.json
+**/GoogleService-Info.plist
+firebase_options.dart
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+
+# Symbolic links
+symlinks/
