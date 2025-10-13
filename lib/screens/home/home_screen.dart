@@ -10,6 +10,7 @@ import '../../model/status_transaksi.dart';
 import '../detail/transaction_list_screen.dart';
 import '../service/service_list_screen.dart';
 import '../setting/setting_list_screen.dart';
+import '../orders/form_nota_screen.dart'; // Import form nota screen
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -139,7 +140,14 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BuatNotaScreen(),
+            ),
+          );
+        },
         backgroundColor: AppColors.btnWarning,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, size: 40, color: AppColors.primaryDark),
