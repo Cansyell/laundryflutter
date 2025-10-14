@@ -4,6 +4,7 @@ import '../../config/app_colors.dart';
 import '../../widgets/common/ios_date_picker.dart';
 import '../../widgets/dialogs/tambah_pelanggan.dart';
 import '../../widgets/dialogs/pilih_pelanggan.dart';
+import '../../widgets/dialogs/pilih_paket.dart'; // IMPORT DIALOG BARU
 
 class BuatNotaScreen extends StatefulWidget {
   const BuatNotaScreen({Key? key}) : super(key: key);
@@ -17,9 +18,33 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
   String selectedPelanggan = 'Lilis';
   String selectedAlamat = 'Jl. Makadari Blok ABC';
   String selectedNoTelp = '0899099999';
-  String selectedJenisPaket = 'Satuan';
-  int bedCoverQty = 1;
-  int cuciKeringQty = 1;
+  
+  // List untuk menyimpan service yang dipilih
+  List<ServiceItem> selectedServices = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Contoh data awal (opsional)
+    selectedServices = [
+      ServiceItem(
+        id: '1',
+        name: 'Bed Cover',
+        price: 'IDR 16.000',
+        unit: 'PCS',
+        minOrder: 1,
+        quantity: 1,
+      ),
+      ServiceItem(
+        id: '7',
+        name: 'Cuci Kering + Lipat',
+        price: 'IDR 10.000',
+        unit: 'KG',
+        minOrder: 3,
+        quantity: 4,
+      ),
+    ];
+  }
 
   // Helper untuk ubah angka bulan ke nama bulan
   String _getMonthName(int month) {
@@ -28,6 +53,45 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     return months[month - 1];
+  }
+
+  // Fungsi untuk menghapus service dari list
+  void _removeService(String serviceId) {
+    setState(() {
+      selectedServices.removeWhere((s) => s.id == serviceId);
+    });
+  }
+
+  // Fungsi untuk update quantity
+  void _updateQuantity(String serviceId, int newQuantity) {
+    setState(() {
+      final index = selectedServices.indexWhere((s) => s.id == serviceId);
+      if (index != -1) {
+        selectedServices[index].quantity = newQuantity;
+      }
+    });
+  }
+
+  // Fungsi untuk calculate total price
+  int _calculateTotal() {
+    int total = 0;
+    for (var service in selectedServices) {
+      final priceStr = service.price.replaceAll(RegExp(r'[^0-9]'), '');
+      final price = int.tryParse(priceStr) ?? 0;
+      total += price * service.quantity;
+    }
+    // Tambahkan biaya tambahan
+    total += 10000; // Biaya Penanganan Khusus
+    total += 5000;  // Biaya Kantong Laundry
+    return total;
+  }
+
+  // Format number to IDR
+  String _formatIDR(int amount) {
+    return 'IDR ${amount.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    )}';
   }
 
   @override
@@ -140,7 +204,6 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                       ),
                       InkWell(
                         onTap: () async {
-                          // TOMBOL PILIH - Buka dialog LIST pelanggan
                           final result = await showPilihPelangganDialog(context);
                           
                           if (result != null) {
@@ -238,7 +301,6 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () async {
-                        // TOMBOL TAMBAH PELANGGAN BARU - Buka dialog FORM
                         final result = await showTambahPelangganDialog(context);
                         
                         if (result != null) {
@@ -248,7 +310,6 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                             selectedNoTelp = result['noTelp'] ?? '';
                           });
                           
-                          // Tampilkan notifikasi sukses
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -334,6 +395,8 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  
+                  // Package Category Chips - INI YANG DIUPDATE
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -341,35 +404,30 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                       _buildPackageChip('Satuan', 'PCS'),
                       _buildPackageChip('Kiloan', 'KG'),
                       _buildPackageChip('Meter', 'Meter'),
-                      _buildPackageChip('Load', 'LOAD', isActive: false),
+                      _buildPackageChip('Load', 'LOAD'),
                     ],
                   ),
-                  const SizedBox(height: 16),
                   
-                  // Bed Cover Item
-                  _buildServiceItem(
-                    title: 'Bed Cover',
-                    price: 'IDR 16.000',
-                    totalPrice: 'IDR 16.000',
-                    quantity: bedCoverQty,
-                    onIncrement: () => setState(() => bedCoverQty++),
-                    onDecrement: () => setState(() {
-                      if (bedCoverQty > 0) bedCoverQty--;
-                    }),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Cuci Kering + Lipat Item
-                  _buildServiceItem(
-                    title: 'Cuci Kering + Lipat',
-                    price: 'IDR 10.000',
-                    totalPrice: 'IDR 40.000',
-                    quantity: cuciKeringQty,
-                    onIncrement: () => setState(() => cuciKeringQty++),
-                    onDecrement: () => setState(() {
-                      if (cuciKeringQty > 0) cuciKeringQty--;
-                    }),
-                  ),
+                  // Display Selected Services
+                  if (selectedServices.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    ...selectedServices.map((service) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildServiceItem(service),
+                    )).toList(),
+                  ] else ...[
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Text(
+                        'Belum ada paket yang dipilih',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -401,27 +459,51 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8FA8E8),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Bayar Sekarang',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                        elevation: 0,
                       ),
-                      child: const Text(
-                        'Sudah Bayar',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8FA8E8),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Bayar Nanti',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -502,10 +584,10 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     'Total',
                     style: TextStyle(
                       color: Colors.white,
@@ -514,8 +596,8 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                     ),
                   ),
                   Text(
-                    'IDR 71.000',
-                    style: TextStyle(
+                    _formatIDR(_calculateTotal()),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -558,49 +640,87 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
     );
   }
 
-  Widget _buildPackageChip(String label, String subtitle, {bool isActive = true}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isActive ? Colors.white : Colors.grey[100],
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isActive ? Colors.grey[300]! : Colors.grey[200]!,
-          width: 1,
+  // UPDATED: Package Chip dengan onTap untuk buka dialog
+  Widget _buildPackageChip(String label, String subtitle) {
+    return InkWell(
+      onTap: () async {
+        // Buka dialog pilih paket
+        final result = await showPilihPaketDialog(
+          context,
+          kategori: label,
+        );
+        
+        if (result != null && result.isNotEmpty) {
+          setState(() {
+            // Tambahkan service baru ke list
+            for (var service in result) {
+              // Cek apakah service sudah ada di list
+              final existingIndex = selectedServices.indexWhere((s) => s.id == service.id);
+              
+              if (existingIndex != -1) {
+                // Jika sudah ada, update quantity-nya
+                selectedServices[existingIndex].quantity += 1;
+              } else {
+                // Jika belum ada, tambahkan service baru
+                selectedServices.add(service);
+              }
+            }
+          });
+          
+          // Tampilkan snackbar
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${result.length} paket berhasil ditambahkan'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        }
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.grey[300]!,
+            width: 1,
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isActive ? Colors.black87 : Colors.grey[500],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '($subtitle)',
-            style: TextStyle(
-              fontSize: 11,
-              color: isActive ? Colors.grey[600] : Colors.grey[400],
+            const SizedBox(width: 4),
+            Text(
+              '($subtitle)',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildServiceItem({
-    required String title,
-    required String price,
-    required String totalPrice,
-    required int quantity,
-    required VoidCallback onIncrement,
-    required VoidCallback onDecrement,
-  }) {
+  // UPDATED: Service Item Widget
+  Widget _buildServiceItem(ServiceItem service) {
+    final priceStr = service.price.replaceAll(RegExp(r'[^0-9]'), '');
+    final pricePerUnit = int.tryParse(priceStr) ?? 0;
+    final totalPrice = pricePerUnit * service.quantity;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -613,25 +733,27 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      service.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    price,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                    const SizedBox(height: 4),
+                    Text(
+                      service.price,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               Row(
                 children: [
@@ -642,7 +764,11 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.remove, size: 16),
-                      onPressed: onDecrement,
+                      onPressed: () {
+                        if (service.quantity > 1) {
+                          _updateQuantity(service.id, service.quantity - 1);
+                        }
+                      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
                         minWidth: 28,
@@ -653,7 +779,7 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
-                      quantity.toString(),
+                      service.quantity.toString(),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -667,7 +793,9 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                      onPressed: onIncrement,
+                      onPressed: () {
+                        _updateQuantity(service.id, service.quantity + 1);
+                      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
                         minWidth: 28,
@@ -696,18 +824,21 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  Text(
-                    'Harga:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
+              InkWell(
+                onTap: () => _removeService(service.id),
+                child: Row(
+                  children: [
+                    Text(
+                      'Hapus',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red[400],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.delete_outline, size: 14, color: Colors.red[400]),
-                ],
+                    const SizedBox(width: 4),
+                    Icon(Icons.delete_outline, size: 14, color: Colors.red[400]),
+                  ],
+                ),
               ),
             ],
           ),
@@ -716,7 +847,7 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                totalPrice,
+                _formatIDR(totalPrice),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/bottom_nav.dart';
+import 'edit_package_screen.dart';
 
 class ServiceListScreen extends StatelessWidget {
   const ServiceListScreen({super.key});
@@ -63,17 +64,28 @@ class ServiceListScreen extends StatelessWidget {
                   style: TextStyle(
                       fontWeight: FontWeight.bold, color: AppColors.primary)),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Klik layanan ${index + 1}'),
-                  duration: const Duration(seconds: 1),
-                ));
+              // Di SINI PERUBAHANNYA
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => const PackageFormScreen(
+                     isEdit:true, 
+                  ),
+                 // Navigasi ke PackageFormScreen
+                  ),
+                );
               },
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+           Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (ctx) => const PackageFormScreen(), // Navigasi ke screen baru
+            ),
+          );
+        },
         backgroundColor: AppColors.btnWarning,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, size: 36, color: AppColors.primaryDark),
