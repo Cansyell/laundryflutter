@@ -5,6 +5,8 @@ import '../../widgets/common/ios_date_picker.dart';
 import '../../widgets/dialogs/tambah_pelanggan.dart';
 import '../../widgets/dialogs/pilih_pelanggan.dart';
 import '../../widgets/dialogs/pilih_paket.dart'; // IMPORT DIALOG BARU
+import '../../widgets/dialogs/konfirmasi_pesanan.dart'; // IMPORT DIALOG BARU
+import '../checkout/transaksi_sukses_screen.dart'; // IMPORT DIALOG BARU
 
 class BuatNotaScreen extends StatefulWidget {
   const BuatNotaScreen({Key? key}) : super(key: key);
@@ -614,25 +616,38 @@ class _BuatNotaScreenState extends State<BuatNotaScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryDark,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  onPressed: () async {
+                      final result = await showKonfirmasiPesananDialog(
+                        context,
+                        tipe: TipeKonfirmasi.transaksi,
+                        onKonfirmasi: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TransaksiSuksesScreen(
+                                orderId: 'Washin - 2604221650',
+                                namaPelanggan: selectedPelanggan,
+                                tanggalTransaksi: selectedDate,
+                                perkiraanSelesai: '06 Juli 2025',
+                                totalAmount: _formatIDR(_calculateTotal()),
+                              ),
+                            ),
+                          );
+  
+                      },
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
                   ),
-                  elevation: 2,
+                  child: const Text('Konfirmasi Pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 ),
-                child: const Text(
-                  'Konfirmasi Pesanan',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+
               ),
-            ),
             const SizedBox(height: 32),
           ],
         ),
