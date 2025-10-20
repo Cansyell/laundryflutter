@@ -2,9 +2,20 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/bottom_nav.dart';
+import '../auth/auth_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    // 1️⃣ Hapus status login dari SharedPreferences
+    await AuthService.logout();
+
+    // 2️⃣ Arahkan ke halaman login, hapus semua route sebelumnya
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +84,7 @@ class SettingsScreen extends StatelessWidget {
           const Divider(),
           const SizedBox(height: 20),
           ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () => _logout(context),
             icon: const Icon(Icons.logout),
             label: const Text('Logout'),
             style: ElevatedButton.styleFrom(
@@ -88,7 +99,6 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: const BottomNav(active: NavTab.settings),
-
       backgroundColor: AppColors.homeBackground,
     );
   }

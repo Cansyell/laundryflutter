@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
+// Asumsikan KategoriPage berada di path ini atau sesuaikan dengan path Anda
+import '../../screens/categories/category_screen.dart'; // <--- PASTIKAN PATH INI BENAR
+import '../../screens/service/service_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
+import '../../screens/expenses/expenses_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
+import '../../screens/expenses/category_expenses_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -46,8 +51,11 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.grid_view_rounded,
                     title: 'Kategori',
                     onTap: () {
-                      Navigator.pop(context);
-                      // TODO: navigate to kategori
+                      Navigator.pop(context); // Tutup drawer dulu
+                      Navigator.push( // Arahkan ke KategoriPage
+                        context,
+                        MaterialPageRoute(builder: (context) => const KategoriPage()),
+                      );
                     },
                   ),
                   const SizedBox(height: 8),
@@ -55,8 +63,11 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.inventory_2_outlined,
                     title: 'Paket',
                     onTap: () {
-                      Navigator.pop(context);
-                      // TODO: navigate to paket
+                      Navigator.pop(context); // Tutup drawer dulu
+                      Navigator.push( // Arahkan ke KategoriPage
+                        context,
+                        MaterialPageRoute(builder: (context) => const ServiceListScreen()),
+                      );
                     },
                   ),
                   
@@ -69,8 +80,11 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.attach_money_rounded,
                     title: 'Daftar Pengeluaran',
                     onTap: () {
-                      Navigator.pop(context);
-                      // TODO: navigate to daftar pengeluaran
+                      Navigator.pop(context); // Tutup drawer dulu
+                      Navigator.push( // Arahkan ke KategoriPage
+                        context,
+                        MaterialPageRoute(builder: (context) => const ExpenseListScreen()),
+                      );
                     },
                   ),
                   const SizedBox(height: 8),
@@ -78,8 +92,11 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.category_outlined,
                     title: 'Kategori Pengeluaran',
                     onTap: () {
-                      Navigator.pop(context);
-                      // TODO: navigate to kategori pengeluaran
+                      Navigator.pop(context); // Tutup drawer dulu
+                      Navigator.push( // Arahkan ke KategoriPage
+                        context,
+                        MaterialPageRoute(builder: (context) => const CategoryExpensesListScreen()),
+                      );
                     },
                   ),
                   
@@ -138,7 +155,7 @@ class AppDrawer extends StatelessWidget {
   }
 }
 
-// Section Header dengan garis
+// Section Header dengan garis (Tidak ada perubahan)
 class _SectionHeader extends StatelessWidget {
   final String title;
   
@@ -167,7 +184,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// Menu Item
+// Menu Item (Tidak ada perubahan)
 class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
