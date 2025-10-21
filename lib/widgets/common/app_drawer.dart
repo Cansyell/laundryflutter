@@ -5,6 +5,9 @@ import '../../screens/categories/category_screen.dart'; // <--- PASTIKAN PATH IN
 import '../../screens/service/service_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
 import '../../screens/expenses/expenses_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
 import '../../screens/expenses/category_expenses_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
+import '../../screens/expenses/laporan_screen.dart';// <--- PASTIKAN PATH INI BENAR
+import '../../screens/pegawai/pegawai_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
+import '../../screens/pelanggan/pelanggan_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -109,8 +112,11 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.receipt_long_outlined,
                     title: 'Pendapatan',
                     onTap: () {
-                      Navigator.pop(context);
-                      // TODO: navigate to pendapatan
+                      Navigator.pop(context); // Tutup drawer dulu
+                      Navigator.push( // Arahkan ke KategoriPage
+                        context,
+                        MaterialPageRoute(builder: (context) => const LaporanScreen()),
+                      );
                     },
                   ),
                   
@@ -118,22 +124,17 @@ class AppDrawer extends StatelessWidget {
                   
                   // MASTER
                   const _SectionHeader(title: 'Master'),
-                  const SizedBox(height: 12),
-                  _MenuItem(
-                    icon: Icons.store_outlined,
-                    title: 'Cabang',
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: navigate to cabang
-                    },
-                  ),
+                 
                   const SizedBox(height: 8),
                   _MenuItem(
                     icon: Icons.person_outline,
                     title: 'Pegawai',
                     onTap: () {
-                      Navigator.pop(context);
-                      // TODO: navigate to pegawai
+                      Navigator.pop(context); // Tutup drawer dulu
+                      Navigator.push( // Arahkan ke KategoriPage
+                        context,
+                        MaterialPageRoute(builder: (context) => const PegawaiListScreen()),
+                      );
                     },
                   ),
                   const SizedBox(height: 8),
@@ -141,8 +142,11 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.people_outline,
                     title: 'Pelanggan',
                     onTap: () {
-                      Navigator.pop(context);
-                      // TODO: navigate to pelanggan
+                      Navigator.pop(context); // Tutup drawer dulu
+                      Navigator.push( // Arahkan ke KategoriPage
+                        context,
+                        MaterialPageRoute(builder: (context) => const PelangganListScreen()),
+                      );
                     },
                   ),
                 ],
