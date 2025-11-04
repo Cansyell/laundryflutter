@@ -1,16 +1,27 @@
+// lib/widgets/app_drawer.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart'; // 👈 Tambahkan GetX untuk navigasi konsisten
+
 import '../../config/app_colors.dart';
-// Asumsikan KategoriPage berada di path ini atau sesuaikan dengan path Anda
-import '../../screens/categories/category_screen.dart'; // <--- PASTIKAN PATH INI BENAR
-import '../../screens/service/service_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
-import '../../screens/expenses/expenses_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
-import '../../screens/expenses/category_expenses_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
-import '../../screens/expenses/laporan_screen.dart';// <--- PASTIKAN PATH INI BENAR
-import '../../screens/pegawai/pegawai_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
-import '../../screens/pelanggan/pelanggan_list_screen.dart';// <--- PASTIKAN PATH INI BENAR
+
+import '../../controllers/category_controller.dart';
+
+// Import semua layar yang dibutuhkan — pastikan path benar
+import '../../screens/categories/category_screen.dart';
+import '../../screens/service/service_list_screen.dart';
+import '../../screens/expenses/expenses_list_screen.dart';
+import '../../screens/expenses/category_expenses_list_screen.dart';
+import '../../screens/expenses/laporan_screen.dart';
+import '../../screens/pegawai/pegawai_list_screen.dart';
+import '../../screens/pelanggan/pelanggan_list_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
+
+  void _navigateAndCloseDrawer(BuildContext context, Widget screen) {
+    Navigator.pop(context); // Tutup drawer
+    Get.to(screen); // Gunakan Get.to() untuk konsistensi dengan GetX
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +30,7 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Header dengan tombol close
+            // Header Drawer
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -54,24 +65,21 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.grid_view_rounded,
                     title: 'Kategori',
                     onTap: () {
-                      Navigator.pop(context); // Tutup drawer dulu
-                      Navigator.push( // Arahkan ke KategoriPage
-                        context,
-                        MaterialPageRoute(builder: (context) => const KategoriPage()),
-                      );
+                      Navigator.pop(context); // Tutup drawer
+
+                      // Pastikan controller tersedia sebelum navigasi
+                      if (!Get.isRegistered<CategoryController>(tag: 'category')) {
+                        Get.put(CategoryController(), tag: 'category');
+                      }
+
+                      Get.to(const KategoriPage());
                     },
                   ),
                   const SizedBox(height: 8),
                   _MenuItem(
                     icon: Icons.inventory_2_outlined,
                     title: 'Paket',
-                    onTap: () {
-                      Navigator.pop(context); // Tutup drawer dulu
-                      Navigator.push( // Arahkan ke KategoriPage
-                        context,
-                        MaterialPageRoute(builder: (context) => const ServiceListScreen()),
-                      );
-                    },
+                    onTap: () => _navigateAndCloseDrawer(context, const ServiceListScreen()),
                   ),
                   
                   const SizedBox(height: 24),
@@ -82,25 +90,13 @@ class AppDrawer extends StatelessWidget {
                   _MenuItem(
                     icon: Icons.attach_money_rounded,
                     title: 'Daftar Pengeluaran',
-                    onTap: () {
-                      Navigator.pop(context); // Tutup drawer dulu
-                      Navigator.push( // Arahkan ke KategoriPage
-                        context,
-                        MaterialPageRoute(builder: (context) => const ExpenseListScreen()),
-                      );
-                    },
+                    onTap: () => _navigateAndCloseDrawer(context, const ExpenseListScreen()),
                   ),
                   const SizedBox(height: 8),
                   _MenuItem(
                     icon: Icons.category_outlined,
                     title: 'Kategori Pengeluaran',
-                    onTap: () {
-                      Navigator.pop(context); // Tutup drawer dulu
-                      Navigator.push( // Arahkan ke KategoriPage
-                        context,
-                        MaterialPageRoute(builder: (context) => const CategoryExpensesListScreen()),
-                      );
-                    },
+                    onTap: () => _navigateAndCloseDrawer(context, const CategoryExpensesListScreen()),
                   ),
                   
                   const SizedBox(height: 24),
@@ -111,43 +107,24 @@ class AppDrawer extends StatelessWidget {
                   _MenuItem(
                     icon: Icons.receipt_long_outlined,
                     title: 'Pendapatan',
-                    onTap: () {
-                      Navigator.pop(context); // Tutup drawer dulu
-                      Navigator.push( // Arahkan ke KategoriPage
-                        context,
-                        MaterialPageRoute(builder: (context) => const LaporanScreen()),
-                      );
-                    },
+                    onTap: () => _navigateAndCloseDrawer(context, const LaporanScreen()),
                   ),
                   
                   const SizedBox(height: 24),
                   
                   // MASTER
                   const _SectionHeader(title: 'Master'),
-                 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   _MenuItem(
                     icon: Icons.person_outline,
                     title: 'Pegawai',
-                    onTap: () {
-                      Navigator.pop(context); // Tutup drawer dulu
-                      Navigator.push( // Arahkan ke KategoriPage
-                        context,
-                        MaterialPageRoute(builder: (context) => const PegawaiListScreen()),
-                      );
-                    },
+                    onTap: () => _navigateAndCloseDrawer(context, const PegawaiListScreen()),
                   ),
                   const SizedBox(height: 8),
                   _MenuItem(
                     icon: Icons.people_outline,
                     title: 'Pelanggan',
-                    onTap: () {
-                      Navigator.pop(context); // Tutup drawer dulu
-                      Navigator.push( // Arahkan ke KategoriPage
-                        context,
-                        MaterialPageRoute(builder: (context) => const PelangganListScreen()),
-                      );
-                    },
+                    onTap: () => _navigateAndCloseDrawer(context, const PelangganListScreen()),
                   ),
                 ],
               ),
@@ -159,7 +136,6 @@ class AppDrawer extends StatelessWidget {
   }
 }
 
-// Section Header dengan garis (Tidak ada perubahan)
 class _SectionHeader extends StatelessWidget {
   final String title;
   
@@ -188,7 +164,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// Menu Item (Tidak ada perubahan)
 class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String title;

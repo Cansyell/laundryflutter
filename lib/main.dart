@@ -1,70 +1,77 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
-import 'config/app_colors.dart';
-import 'screens/home/home_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:get/get.dart';
+
+// Import controllers
+import 'controllers/login_controller.dart'; 
+import 'controllers/forgot_password_controller.dart'; 
+import 'controllers/register_controller.dart'; 
+
+// Import screens
+import 'screens/splash/splash_screen.dart';
+import 'screens/welcome/welcome_screen.dart';
 import 'screens/auth/login_screen.dart';
-// import 'screens/auth/auth_service.dart';
+import 'screens/home/home_screen.dart';
+import 'screens/auth/forgot_password_page.dart';
+import 'screens/auth/register_page.dart';
 
-void main() => runApp(const LalaLaundryApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-class LalaLaundryApp extends StatelessWidget {
-  const LalaLaundryApp({super.key});
+  try {
+    await dotenv.load(fileName: "assets/.env");
+  } catch (e) {
+    debugPrint('Error loading .env: $e');
+  }
+
+  // ✅ Daftarkan controller secara lazy
+  Get.lazyPut<LoginController>(() => LoginController());
+
+  runApp(const WashInApp());
+}
+
+class WashInApp extends StatelessWidget {
+  const WashInApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Lala Laundry',
+      title: 'wash.in',
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: AppColors.background,
+        scaffoldBackgroundColor: Colors.white,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          background: AppColors.background,
-          primary: AppColors.primary,
+          seedColor: const Color(0xFF3D5A80),
+          background: Colors.white,
+          primary: const Color(0xFF3D5A80),
         ),
       ),
-      home: const AuthMiddleware(),
-      routes: {
-        '/home': (_) => const HomeScreen(),
-        '/login': (_) => const WelcomePage(),
-      },
-    );
-  }
-}
+      initialRoute: '/splash',
+      getPages: [
+        GetPage(name: '/splash', page: () => const SplashScreen()),
+        GetPage(name: '/welcome', page: () => const WelcomeScreen()),
+        GetPage(name: '/login', page: () => const LoginPage()), // ✅
+        GetPage(name: '/home', page: () => const HomeScreen()),
 
-// 🧭 Middleware Auth
-class AuthMiddleware extends StatefulWidget {
-  const AuthMiddleware({super.key});
+        GetPage(
+          name: '/forgot-password',
+          page: () => const ForgotPasswordPage(),
+          binding: BindingsBuilder(() {
+            Get.put<ForgotPasswordController>(ForgotPasswordController());
+          }),
+        ),
 
-  @override
-  State<AuthMiddleware> createState() => _AuthMiddlewareState();
-}
+        GetPage(
+          name: '/register',
+          page: () => const RegisterPage(),
+          binding: BindingsBuilder(() {
+            Get.put<RegisterController>(RegisterController());
+          }),
+        ),
 
-class _AuthMiddlewareState extends State<AuthMiddleware> {
-  @override
-  void initState() {
-    super.initState();
-    _checkLogin();
-  }
-
-  Future<void> _checkLogin() async {
-    final loggedIn = await AuthService.isLoggedIn();
-    if (!mounted) return;
-
-    if (loggedIn) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      Navigator.pushReplacementNamed(context, '/login');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Sementara tampilkan splash/loading
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
+      ],
     );
   }
 }

@@ -1,19 +1,13 @@
-// lib/pages/login_page.dart
+// lib/pages/register_page.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/login_controller.dart';
-import 'package:flutter/gestures.dart';
+import '../../controllers/register_controller.dart';
 
-class LoginPage extends GetView<LoginController> {
-  const LoginPage({Key? key}) : super(key: key);
+class RegisterPage extends GetView<RegisterController> {
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    
-     if (!Get.isRegistered<LoginController>()) {
-      Get.put(LoginController());
-    }
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -31,7 +25,7 @@ class LoginPage extends GetView<LoginController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              
+
               // Logo
               Center(
                 child: Container(
@@ -57,31 +51,40 @@ class LoginPage extends GetView<LoginController> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Title
               const Text(
-                'Masuk ke akun Anda',
+                'Buat Akun Baru',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1A1F36),
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Subtitle
               const Text(
-                'Masukkan email dan kata sandi Anda untuk masuk',
+                'Daftarkan diri Anda untuk memulai',
                 style: TextStyle(
                   fontSize: 15,
                   color: Color(0xFF6B7280),
                 ),
               ),
-              
+
               const SizedBox(height: 40),
+
+              // Nama Lengkap Field
+              _buildTextField(
+                controller: controller.nameController,
+                hintText: 'Nama Lengkap',
+                prefixIcon: Icons.person_outline,
+              ),
+
+              const SizedBox(height: 16),
 
               // Email Field
               _buildTextField(
@@ -90,7 +93,7 @@ class LoginPage extends GetView<LoginController> {
                 keyboardType: TextInputType.emailAddress,
                 prefixIcon: Icons.email_outlined,
               ),
-              
+
               const SizedBox(height: 16),
 
               // Password Field
@@ -98,14 +101,14 @@ class LoginPage extends GetView<LoginController> {
 
               const SizedBox(height: 24),
 
-              // Login Button
+              // Register Button
               Obx(() => SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   onPressed: controller.isLoading.value
                       ? null
-                      : () => controller.login(),
+                      : () => controller.register(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3D5A80),
                     disabledBackgroundColor: const Color(0xFF3D5A80).withOpacity(0.6),
@@ -124,7 +127,7 @@ class LoginPage extends GetView<LoginController> {
                           ),
                         )
                       : const Text(
-                          'Login',
+                          'Daftar',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -134,100 +137,36 @@ class LoginPage extends GetView<LoginController> {
                 ),
               )),
 
+              const SizedBox(height: 24),
 
-                const SizedBox(height: 16),
-               // Belum punya akun?
-                Center(
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'Belum punya akun? ',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                        height: 1.3,
-                      ),
-                      children: [
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.middle,
-                          child: InkWell(
-                            onTap: () => Get.toNamed('/register'),
-                            borderRadius: BorderRadius.circular(4),
-                            splashColor: Colors.blue.withOpacity(0.1),
-                            highlightColor: Colors.transparent,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2),
-                              child: Text(
-                                'Daftar sekarang',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF3D5A80),
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.3,
-                                ),
-                              ),
+              // Sudah punya akun?
+              Center(
+                child: RichText(
+                  text: TextSpan(
+                    text: 'Sudah punya akun? ',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6B7280),
+                    ),
+                    children: [
+                      WidgetSpan(
+                        child: GestureDetector(
+                          onTap: () => Get.offAllNamed('/login'),
+                          child: Text(
+                            'Masuk di sini',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: const Color(0xFF3D5A80),
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-
-              const SizedBox(height: 24),
-
-              // Lupa Password Link
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Get.toNamed('/forgot-password'),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                  ),
-                  child: const Text(
-                    'Lupa kata sandi?',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF3D5A80),
-                      fontWeight: FontWeight.w500,
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
 
-              // Info Box
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F9FF),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFBAE6FD)),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Color(0xFF0284C7), size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Gunakan akun terdaftar',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0284C7),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Pastikan akun Anda sudah terdaftar di sistem Laravel API.',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF075985)),
-                    ),
-                  ],
-                ),
-              ),
-              
               const SizedBox(height: 40),
             ],
           ),
@@ -236,7 +175,7 @@ class LoginPage extends GetView<LoginController> {
     );
   }
 
-  // Text Field Builder
+  // Text Field Builder (reusable)
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
