@@ -5,6 +5,7 @@ import 'package:get/get.dart'; // 👈 Tambahkan GetX untuk navigasi konsisten
 import '../../config/app_colors.dart';
 
 import '../../controllers/category_controller.dart';
+import '../../controllers/service_controller.dart';
 
 // Import semua layar yang dibutuhkan — pastikan path benar
 import '../../screens/categories/category_screen.dart';
@@ -79,7 +80,13 @@ class AppDrawer extends StatelessWidget {
                   _MenuItem(
                     icon: Icons.inventory_2_outlined,
                     title: 'Paket',
-                    onTap: () => _navigateAndCloseDrawer(context, const ServiceListScreen()),
+                    onTap:(){
+                       if (!Get.isRegistered<ServiceController>(tag: 'service')) {
+                        Get.put(ServiceController(), tag: 'service');
+                      }
+
+                      Get.to(const ServicePage());
+                    },
                   ),
                   
                   const SizedBox(height: 24),

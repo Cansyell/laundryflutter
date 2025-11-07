@@ -1,125 +1,150 @@
+// lib/screens/services/service_screen.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../controllers/service_controller.dart';
+import 'service_form_screen.dart';
 import '../../config/app_colors.dart';
-import '../../widgets/common/bottom_nav.dart';
-import '../../widgets/common/app_drawer.dart';
-import 'edit_package_screen.dart';
 
-class ServiceListScreen extends StatelessWidget {
-  const ServiceListScreen({super.key});
+class ServicePage extends StatefulWidget {
+  const ServicePage({super.key});
+
+  @override
+  State<ServicePage> createState() => _ServicePageState();
+}
+
+class _ServicePageState extends State<ServicePage> {
+  late final ServiceController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ambil controller yang sudah di-put
+    controller = Get.find<ServiceController>(tag: 'service');
+    // Refresh data saat page dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchServices();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const AppDrawer(),
+      backgroundColor: AppColors.homeBackground,
       appBar: AppBar(
-        title: const Text(
-          'Paket',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        title: const Text('Layanan', style: TextStyle(color: AppColors.textWhite)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textWhite),
+          onPressed: () => Get.back(),
+        ),
         elevation: 0,
       ),
-      backgroundColor: const Color(0xFFF5F9FF),
-      body: Column(
-        children: [
-          // 🔍 Kotak Pencarian
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Cari',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await controller.fetchServices();
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Search Field
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Cari layanan...',
+                  prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                  filled: true,
+                  fillColor: AppColors.textWhite,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
-            ),
-          ),
+              const SizedBox(height: 16),
 
-          // 🧾 List Paket
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-              children: [
-                _buildPackageCard(
-                  context,
-                  kategori: 'Kiloan',
-                  nama: 'Cuci Kering + Strika',
-                  estimasi: 'Estimasi 3 Hari',
-                  harga: 'IDR 6.000',
-                ),
-                _buildPackageCard(
-                  context,
-                  kategori: 'Kiloan',
-                  nama: 'Setrika Saja',
-                  estimasi: 'Estimasi 3 Hari',
-                  harga: 'IDR 5.000',
-                ),
-                _buildPackageCard(
-                  context,
-                  kategori: 'Satuan',
-                  nama: 'Bed Cover',
-                  estimasi: 'Estimasi 3 Hari',
-                  harga: 'IDR 16.000',
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+              // List Layanan
+              Expanded(
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-      // ➕ Tombol Tambah
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (ctx) => const PackageFormScreen(),
-            ),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: AppColors.textWhite),
-        label: const Text(
-          'Tambah',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textWhite,
+                  final list = controller.services;
+                  if (list.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        SizedBox(height: 100),
+                        Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 64,
+                                color: AppColors.textGrey,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'Belum ada layanan',
+                                style: TextStyle(
+                                  color: AppColors.textGrey,
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final item = list[index];
+                      return _buildServiceCard(item);
+                    },
+                  );
+                }),
+              ),
+            ],
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: const BottomNav(active: NavTab.services),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          // Buka form dalam mode TAMBAH
+          await Get.to(() => const ServiceFormScreen());
+          // Refresh setelah kembali
+          controller.fetchServices();
+        },
+        backgroundColor: AppColors.primary,
+        label: const Text(
+          'Tambah',
+          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textWhite),
+        ),
+        icon: const Icon(Icons.add, color: AppColors.textWhite),
+      ),
     );
   }
 
-  // Widget builder untuk kartu paket
-  Widget _buildPackageCard(
-    BuildContext context, {
-    required String kategori,
-    required String nama,
-    required String estimasi,
-    required String harga,
-  }) {
+  Widget _buildServiceCard(item) {
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (ctx) => const PackageFormScreen(isEdit: true),
-          ),
-        );
+      onTap: () async {
+        // Buka form dalam mode EDIT
+        
+        await Get.to(() => ServiceFormScreen(service: item));
+        // Refresh setelah kembali
+        controller.fetchServices();
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.textWhite,
+          borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -128,58 +153,140 @@ class ServiceListScreen extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Kolom kiri
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // Nama & Kategori
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    item.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (item.category != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      item.category!.name,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Harga & Diskon
+            Row(
               children: [
                 Text(
-                  kategori,
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  nama,
+                  'Rp ${_formatNumber(item.price)}',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
                     fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
                   ),
                 ),
-                Text(
-                  estimasi,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
+                if (item.discount != null && item.discount! > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '-Rp ${_formatNumber(item.discount!)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Info tambahan
+            Row(
+              children: [
+                if (item.minOrder != null && item.minOrder! > 1) ...[
+                  const Icon(Icons.shopping_cart,
+                      size: 14, color: AppColors.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Min: ${item.minOrder} ${item.type ?? ''}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                if (item.estimate != null) ...[
+                  const Icon(Icons.timer,
+                      size: 14, color: AppColors.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    item.estimate!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ],
             ),
 
-            // Kolom kanan
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Text(
-                  'Min. Order 3 KG',
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
+            // Deskripsi
+            if (item.description != null &&
+                item.description!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                item.description!,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textGrey,
+                  fontStyle: FontStyle.italic,
                 ),
-                Text(
-                  harga,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  String _formatNumber(double number) {
+    return number.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
   }
 }

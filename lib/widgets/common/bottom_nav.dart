@@ -4,6 +4,8 @@ import '../../screens/home/home_screen.dart';
 import '../../screens/detail/transaction_list_screen.dart';
 import '../../screens/service/service_list_screen.dart';
 import '../../screens/setting/setting_list_screen.dart';
+import '../../controllers/service_controller.dart';
+import 'package:get/get.dart';
 
 enum NavTab { home, orders, services, settings }
 
@@ -23,7 +25,7 @@ class BottomNav extends StatelessWidget {
         target = const TransactionListScreen();
         break;
       case NavTab.services:
-        target = const ServiceListScreen();
+        target = const ServicePage();
         break;
       case NavTab.settings:
         target = const SettingsScreen();
@@ -73,7 +75,13 @@ class BottomNav extends StatelessWidget {
               icon: Icons.room_service,
               label: 'Layanan',
               active: active == NavTab.services,
-              onTap: () => _handleNavigation(context, NavTab.services),
+              onTap:(){
+                       if (!Get.isRegistered<ServiceController>(tag: 'service')) {
+                        Get.put(ServiceController(), tag: 'service');
+                      }
+
+                      Get.to(const ServicePage());
+                    },
             ),
             _NavBtn(
               icon: Icons.settings,

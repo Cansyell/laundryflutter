@@ -16,6 +16,7 @@ import 'screens/home/home_screen.dart';
 import 'screens/auth/forgot_password_page.dart';
 import 'screens/auth/register_page.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -48,12 +49,15 @@ class WashInApp extends StatelessWidget {
           primary: const Color(0xFF3D5A80),
         ),
       ),
+      
       initialRoute: '/splash',
       getPages: [
         GetPage(name: '/splash', page: () => const SplashScreen()),
         GetPage(name: '/welcome', page: () => const WelcomeScreen()),
         GetPage(name: '/login', page: () => const LoginPage()), // ✅
+    
         GetPage(name: '/home', page: () => const HomeScreen()),
+        
 
         GetPage(
           name: '/forgot-password',

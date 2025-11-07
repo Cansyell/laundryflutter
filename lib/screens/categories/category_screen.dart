@@ -1,10 +1,10 @@
 // lib/screens/categories/category_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../controllers/category_controller.dart'; // Sesuaikan path
-import 'category_form_screen.dart'; // Sesuaikan path
-import '../../../config/app_colors.dart';
-
+import '../../controllers/category_controller.dart';
+import 'category_form_screen.dart'; // Sesuaikan path jika berbeda
+import '../../config/app_colors.dart';
+import '../../model/category_model.dart';
 
 class KategoriPage extends StatefulWidget {
   const KategoriPage({super.key});
@@ -19,14 +19,16 @@ class _KategoriPageState extends State<KategoriPage> {
   @override
   void initState() {
     super.initState();
-    // Ambil controller yang sudah di-put dari drawer
+    // Ambil controller yang sudah di-put dari tempat lain (misal: drawer)
+    // Pastikan controller sudah di-put sebelum ke halaman ini
     controller = Get.find<CategoryController>(tag: 'category');
   }
 
+  // ❌ JANGAN hapus controller di sini karena form edit masih butuh
+  // Karena form dan list berbagi controller yang sama
   @override
   void dispose() {
-    // Hapus controller saat halaman ditutup
-    Get.delete<CategoryController>(tag: 'category');
+    // Get.delete<CategoryController>(tag: 'category'); // <-- DIHAPUS / DIBERI KOMENTAR
     super.dispose();
   }
 
@@ -50,7 +52,7 @@ class _KategoriPageState extends State<KategoriPage> {
             TextField(
               decoration: InputDecoration(
                 hintText: 'Cari kategori...',
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.textWhite,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
@@ -59,6 +61,7 @@ class _KategoriPageState extends State<KategoriPage> {
                   borderSide: BorderSide.none,
                 ),
               ),
+              // Optional: tambahkan logika pencarian jika diperlukan
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -69,7 +72,15 @@ class _KategoriPageState extends State<KategoriPage> {
 
                 final list = controller.categories;
                 if (list.isEmpty) {
-                  return const Center(child: Text('Belum ada kategori'));
+                  return Center(
+                    child: Text(
+                      'Belum ada kategori',
+                      style: TextStyle(
+                        color: AppColors.textGrey,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  );
                 }
 
                 return ListView.separated(
@@ -77,24 +88,47 @@ class _KategoriPageState extends State<KategoriPage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = list[index];
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.textWhite,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            item.name,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                          Text(
-                            item.type ?? '-',
-                            style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
-                          ),
-                        ],
+                    return GestureDetector(
+                      onTap: () {
+                        // Buka form dalam mode EDIT
+                        Get.to(() => CategoryFormScreen(category: item));
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.textWhite,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                item.name,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              item.type ?? '-',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -106,6 +140,7 @@ class _KategoriPageState extends State<KategoriPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
+          // Buka form dalam mode TAMBAH
           Get.to(() => const CategoryFormScreen());
         },
         backgroundColor: AppColors.primary,

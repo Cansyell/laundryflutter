@@ -1,18 +1,14 @@
-// lib/models/category_model.dart
+// lib/model/category_model.dart
 class CategoryModel {
-  final int? id;
-  final String name;
-  final String? type;
+  String? id;
+  String name;
+  String? type;
 
-  CategoryModel({
-    this.id,
-    required this.name,
-    this.type,
-  });
+  CategoryModel({this.id, required this.name, this.type});
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
-      id: json['id'],
+      id: json['id']?.toString(),
       name: json['name'],
       type: json['type'],
     );
