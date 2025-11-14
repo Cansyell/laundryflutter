@@ -6,6 +6,7 @@ import '../../config/app_colors.dart';
 
 import '../../controllers/category_controller.dart';
 import '../../controllers/service_controller.dart';
+import '../../controllers/customer_controller.dart';
 
 // Import semua layar yang dibutuhkan — pastikan path benar
 import '../../screens/categories/category_screen.dart';
@@ -131,7 +132,13 @@ class AppDrawer extends StatelessWidget {
                   _MenuItem(
                     icon: Icons.people_outline,
                     title: 'Pelanggan',
-                    onTap: () => _navigateAndCloseDrawer(context, const PelangganListScreen()),
+                   onTap:(){
+                       if (!Get.isRegistered<CustomerController>(tag: 'customer')) {
+                        Get.put(CustomerController(), tag: 'customer');
+                      }
+
+                      Get.to(const PelangganListScreen());
+                    },
                   ),
                 ],
               ),

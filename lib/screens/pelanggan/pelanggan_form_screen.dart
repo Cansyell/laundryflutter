@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../config/app_colors.dart';
+import '../../controllers/customer_controller.dart';
+import '../../model/customer_model.dart';
 
 class TambahPelangganScreen extends StatefulWidget {
-  final Map<String, String>? pelanggan; // null → tambah, ada data → edit
+  final CustomerModel? customer;
 
-  const TambahPelangganScreen({Key? key, this.pelanggan}) : super(key: key);
+  const TambahPelangganScreen({Key? key, this.customer}) : super(key: key);
 
   @override
   State<TambahPelangganScreen> createState() => _TambahPelangganScreenState();
@@ -12,30 +15,24 @@ class TambahPelangganScreen extends StatefulWidget {
 
 class _TambahPelangganScreenState extends State<TambahPelangganScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
+  late final CustomerController _controller;
 
-  bool get isEditMode => widget.pelanggan != null;
+  bool get isEditMode => widget.customer != null;
 
   @override
   void initState() {
     super.initState();
-    // Isi form kalau mode edit
-    if (isEditMode) {
-      _nameController.text = widget.pelanggan!['name'] ?? '';
-      _phoneController.text = widget.pelanggan!['phone'] ?? '';
-      // 🔧 Perbaikan di sini → ganti 'address' jadi 'alamat'
-      _addressController.text = widget.pelanggan!['alamat'] ?? '';
-    }
-  }
+    _controller = Get.find<CustomerController>();
+    _controller.resetForm();
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    super.dispose();
+    if (isEditMode && widget.customer != null) {
+      // Delay sedikit untuk hindari conflict controller
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _controller.nameController.text = widget.customer!.name;
+        _controller.phoneController.text = widget.customer!.phone ?? '';
+        _controller.addressController.text = widget.customer!.address ?? '';
+      });
+    }
   }
 
   @override
@@ -47,7 +44,7 @@ class _TambahPelangganScreenState extends State<TambahPelangganScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textWhite),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Get.back(),
         ),
         title: Text(
           isEditMode ? 'Edit Pelanggan' : 'Tambah Pelanggan',
@@ -67,22 +64,23 @@ class _TambahPelangganScreenState extends State<TambahPelangganScreen> {
             _buildLabel('Nama Pelanggan', isRequired: true),
             const SizedBox(height: 8),
             _buildTextField(
-              controller: _nameController,
+              controller: _controller.nameController,
               hintText: 'Nama Pelanggan',
               prefixIcon: Icons.person_outline,
-              validator: (v) => v!.isEmpty ? 'Nama pelanggan harus diisi' : null,
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? 'Nama pelanggan harus diisi'
+                  : null,
             ),
             const SizedBox(height: 16),
 
             // No. Telp / WA
-            _buildLabel('No. Telp / WA', isRequired: true),
+            _buildLabel('No. Telp / WA', isRequired: false),
             const SizedBox(height: 8),
             _buildTextField(
-              controller: _phoneController,
+              controller: _controller.phoneController,
               hintText: 'No. Telp / WA',
               prefixIcon: Icons.phone_outlined,
               keyboardType: TextInputType.phone,
-              validator: (v) => v!.isEmpty ? 'No. Telp / WA harus diisi' : null,
             ),
             const SizedBox(height: 8),
             const Text(
@@ -92,61 +90,60 @@ class _TambahPelangganScreenState extends State<TambahPelangganScreen> {
             const SizedBox(height: 16),
 
             // Alamat
-            _buildLabel('Alamat', isRequired: true),
+            _buildLabel('Alamat', isRequired: false),
             const SizedBox(height: 8),
             _buildTextField(
-              controller: _addressController,
+              controller: _controller.addressController,
               hintText: 'Alamat lengkap pelanggan',
               prefixIcon: Icons.location_on_outlined,
               keyboardType: TextInputType.streetAddress,
-              validator: (v) => v!.isEmpty ? 'Alamat harus diisi' : null,
+              maxLines: 3,
             ),
             const SizedBox(height: 24),
 
             // Tombol Simpan / Perbarui
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    final newData = {
-                      'name': _nameController.text,
-                      'phone': _phoneController.text,
-                      // 🔧 Ganti key di sini juga agar konsisten
-                      'alamat': _addressController.text,
-                    };
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isEditMode
-                              ? 'Data pelanggan berhasil diperbarui'
-                              : 'Data pelanggan berhasil disimpan',
-                        ),
-                        backgroundColor: AppColors.labelSuccess,
+            Obx(() => SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _controller.isSubmitting.value
+                        ? null
+                        : () {
+                            if (_formKey.currentState!.validate()) {
+                              if (isEditMode && widget.customer != null) {
+                                _controller.updateCustomer(widget.customer!.id!);
+                              } else {
+                                _controller.createCustomer();
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    );
-
-                    Navigator.pop(context, newData);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                      elevation: 0,
+                      disabledBackgroundColor:
+                          AppColors.primary.withOpacity(0.6),
+                    ),
+                    child: _controller.isSubmitting.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: AppColors.textWhite,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            isEditMode ? 'Perbarui' : 'Simpan',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textWhite,
+                            ),
+                          ),
                   ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  isEditMode ? 'Perbarui' : 'Simpan',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textWhite,
-                  ),
-                ),
-              ),
-            ),
+                )),
           ],
         ),
       ),
@@ -181,12 +178,14 @@ class _TambahPelangganScreenState extends State<TambahPelangganScreen> {
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
+    int maxLines = 1,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
+      maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(color: AppColors.textGrey, fontSize: 14),

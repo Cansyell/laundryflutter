@@ -1,62 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../config/app_colors.dart';
-import 'pelanggan_form_screen.dart';
+import '../../controllers/customer_controller.dart';
+import '../../model/customer_model.dart';
+import 'pelanggan_form_screen.dart'; // Sesuaikan path
 
-class PelangganListScreen extends StatefulWidget {
+class PelangganListScreen extends StatelessWidget {
   const PelangganListScreen({Key? key}) : super(key: key);
 
   @override
-  State<PelangganListScreen> createState() => _PelangganListScreenState();
-}
-
-class _PelangganListScreenState extends State<PelangganListScreen> {
-  final TextEditingController _searchController = TextEditingController();
-
-  // Data Pelanggan (asli)
-  final List<Map<String, String>> _pelangganList = [
-    {
-      'name': 'Lala',
-      'phone': '08234567890',
-      'alamat': 'Jl. Mawar No. 5, Purwokerto',
-    },
-    {
-      'name': 'Lulu',
-      'phone': '08122333456',
-      'alamat': 'Jl. Melati No. 8, Purwokerto',
-    },
-    {
-      'name': 'Budi',
-      'phone': '085212345678',
-      'alamat': 'Jl. Kenanga No. 2, Purwokerto',
-    },
-  ];
-
-  // Data yang difilter berdasarkan pencarian
-  List<Map<String, String>> _filteredPelangganList = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredPelangganList = List.from(_pelangganList);
-
-    // setiap kali text berubah, update hasil pencarian
-    _searchController.addListener(_filterPelanggan);
-  }
-
-  void _filterPelanggan() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredPelangganList = _pelangganList.where((pelanggan) {
-        final name = pelanggan['name']!.toLowerCase();
-        final phone = pelanggan['phone']!.toLowerCase();
-        final alamat = pelanggan['alamat']!.toLowerCase();
-        return name.contains(query) || phone.contains(query) || alamat.contains(query);
-      }).toList();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.put(CustomerController()); // Pastikan controller aktif
+    final searchController = TextEditingController();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -74,7 +30,7 @@ class _PelangganListScreenState extends State<PelangganListScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar
+          // 🔹 Search Bar — gunakan Obx untuk binding search
           Container(
             color: AppColors.primary,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -84,17 +40,15 @@ class _PelangganListScreenState extends State<PelangganListScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextField(
-                controller: _searchController,
+                controller: searchController,
+                onChanged: (value) => controller.searchQuery.value = value,
                 decoration: InputDecoration(
                   hintText: 'Cari nama, nomor, atau alamat',
                   hintStyle: TextStyle(
                     color: AppColors.textGrey,
                     fontSize: 14,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.textGrey,
-                  ),
+                  prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -105,68 +59,59 @@ class _PelangganListScreenState extends State<PelangganListScreen> {
             ),
           ),
 
-          // List of Pelanggan (hasil pencarian)
+          // 🔹 Daftar Pelanggan — hanya gunakan Obx
           Expanded(
-            child: _filteredPelangganList.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Tidak ada data pelanggan',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredPelangganList.length,
-                    itemBuilder: (context, index) {
-                      final pelanggan = _filteredPelangganList[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: PelangganCard(
-                          name: pelanggan['name']!,
-                          phone: pelanggan['phone']!,
-                          alamat: pelanggan['alamat']!,
-                          onEdit: () async {
-                            final updatedData = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    TambahPelangganScreen(pelanggan: pelanggan),
-                              ),
-                            );
-                            if (updatedData != null) {
-                              setState(() {
-                                final originalIndex =
-                                    _pelangganList.indexOf(pelanggan);
-                                _pelangganList[originalIndex] = updatedData;
-                                _filterPelanggan(); // update tampilan
-                              });
-                            }
-                          },
-                          onDelete: () {
-                            _showDeleteDialog(context, pelanggan['name']!);
-                          },
-                        ),
-                      );
-                    },
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final filtered = controller.filteredCustomers;
+
+              if (filtered.isEmpty) {
+                return Center(
+                  child: Text(
+                    controller.searchQuery.isNotEmpty
+                        ? 'Tidak ada hasil untuk "${controller.searchQuery.value}"'
+                        : 'Belum ada data pelanggan',
+                    style: const TextStyle(color: Colors.grey, fontSize: 16),
                   ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: controller.fetchCustomers,
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final customer = filtered[index];
+                    final id = customer.id ?? 'temp_${index}';
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: PelangganCard(
+                        key: ValueKey(id), // ✅ Aman karena id tidak null
+                        name: customer.name,
+                        phone: customer.phone ?? '-',
+                        alamat: customer.address ?? '-',
+                        onEdit: () {
+                          Get.to(() => TambahPelangganScreen(customer: customer));
+                        },
+                        onDelete: () {
+                          _showDeleteDialog(context, customer, controller);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              );
+            }),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final newPelanggan = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const TambahPelangganScreen(),
-            ),
-          );
-
-          if (newPelanggan != null) {
-            setState(() {
-              _pelangganList.add(newPelanggan);
-              _filterPelanggan(); // update hasil search juga
-            });
-          }
+        onPressed: () {
+          Get.to(() => const TambahPelangganScreen());
         },
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: AppColors.textWhite),
@@ -181,39 +126,31 @@ class _PelangganListScreenState extends State<PelangganListScreen> {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, String name) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Hapus Pelanggan'),
-          content: Text('Apakah Anda yakin ingin menghapus $name?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _pelangganList.removeWhere((p) => p['name'] == name);
-                  _filterPelanggan();
-                });
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Hapus',
-                style: TextStyle(color: AppColors.error),
-              ),
-            ),
-          ],
-        );
-      },
+  void _showDeleteDialog(
+      BuildContext context, CustomerModel customer, CustomerController controller) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Hapus Pelanggan'),
+        content: Text('Yakin hapus "${customer.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back(); // tutup dialog
+              controller.deleteCustomer(customer.id!);
+            },
+            child: const Text('Hapus', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
     );
   }
 }
 
-// Pelanggan Card Widget
+// 🔹 PelangganCard tetap sama — tidak perlu perubahan
 class PelangganCard extends StatelessWidget {
   final String name;
   final String phone;
@@ -248,7 +185,6 @@ class PelangganCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Nama
           Row(
             children: [
               Icon(Icons.person_outline, size: 20, color: AppColors.textGrey),
@@ -264,8 +200,6 @@ class PelangganCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
-          // Nomor Telepon
           Row(
             children: [
               Icon(Icons.phone_outlined, size: 20, color: AppColors.textGrey),
@@ -273,10 +207,7 @@ class PelangganCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   phone,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                 ),
               ),
               IconButton(
@@ -299,20 +230,14 @@ class PelangganCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
-          // Alamat
           Row(
             children: [
-              Icon(Icons.location_on_outlined,
-                  size: 20, color: AppColors.textGrey),
+              Icon(Icons.location_on_outlined, size: 20, color: AppColors.textGrey),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   alamat,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                 ),
               ),
               IconButton(

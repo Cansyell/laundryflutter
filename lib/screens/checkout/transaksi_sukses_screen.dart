@@ -1,27 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../config/app_colors.dart';
+import '../../model/customer_model.dart';
+import '../../model/service_model.dart';
+import '../../model/nota_service_item.dart';
 import '../../widgets/dialogs/nota_pembayaran.dart';
 import '../detail/detail_screen.dart';
 import '../../model/status_transaksi.dart';
 
 class TransaksiSuksesScreen extends StatelessWidget {
-  final String orderId;
-  final String namaPelanggan;
-  final String tanggalTransaksi;
-  final String perkiraanSelesai;
-  final String totalAmount;
+  final String transactionId;
+  final CustomerModel customer;
+  final DateTime transactionDate;
+  final DateTime estimatedCompletion;
+  final double totalAmount;
+  final List<NotaServiceItem> services;
+  final double biayaPenanganan;
+  final double biayaKantong;
+  final String statusPembayaran;
 
   const TransaksiSuksesScreen({
     Key? key,
-    required this.orderId,
-    required this.namaPelanggan,
-    required this.tanggalTransaksi,
-    required this.perkiraanSelesai,
+    required this.transactionId,
+    required this.customer,
+    required this.transactionDate,
+    required this.estimatedCompletion,
     required this.totalAmount,
+    required this.services,
+    required this.biayaPenanganan,
+    required this.biayaKantong,
+    required this.statusPembayaran,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    String formatDate(DateTime date) {
+      final formatter = DateFormat('dd MMM yyyy', 'id_ID');
+      return formatter.format(date);
+    }
+
+    final List<Map<String, dynamic>> notaItems = [
+      ...services.map((item) => {
+            "nama": item.name,
+            "qty": item.quantity,
+            "harga": (item.price * item.quantity).toInt(),
+            "satuan": item.type,
+          }),
+      if (biayaPenanganan > 0)
+        {
+          "nama": "Biaya Penanganan",
+          "qty": 1,
+          "harga": biayaPenanganan.toInt(),
+        },
+      if (biayaKantong > 0)
+        {
+          "nama": "Biaya Kantong",
+          "qty": 1,
+          "harga": biayaKantong.toInt(),
+        },
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.primaryDark,
       body: SafeArea(
@@ -47,7 +85,6 @@ class TransaksiSuksesScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Success Illustration
                   Image.asset(
                     'assets/images/sukses.png',
                     width: 200,
@@ -56,7 +93,6 @@ class TransaksiSuksesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // Success Message
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
@@ -68,12 +104,12 @@ class TransaksiSuksesScreen extends StatelessWidget {
                       children: [
                         const TextSpan(text: 'Horee, Transaksi '),
                         TextSpan(
-                          text: totalAmount,
+                          text: _formatIDR(totalAmount.toInt()),
                           style: const TextStyle(
                             color: AppColors.textSuccess,
                           ),
                         ),
-                        const TextSpan(text: ' Berhasil'),
+                        const TextSpan(text: ' Berhasil!'),
                       ],
                     ),
                   ),
@@ -96,51 +132,60 @@ class TransaksiSuksesScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildDetailRow('Order ID', orderId),
+                        _buildDetailRow('Order ID', transactionId),
                         const SizedBox(height: 16),
-                        _buildDetailRow('Nama Pelanggan', namaPelanggan),
+                        _buildDetailRow('Nama Pelanggan', customer.name),
+                        if (customer.phone != null) ...[
+                          const SizedBox(height: 16),
+                          _buildDetailRow('No. HP', customer.phone!),
+                        ],
                         const SizedBox(height: 16),
-                        _buildDetailRow('Tanggal Transaksi', tanggalTransaksi),
+                        _buildDetailRow('Tanggal Transaksi', formatDate(transactionDate)),
                         const SizedBox(height: 16),
-                        _buildDetailRow('Perkiraan Selesai', perkiraanSelesai),
+                        _buildDetailRow('Estimasi Selesai', formatDate(estimatedCompletion)),
                         const SizedBox(height: 24),
 
                         // Tombol Cetak Nota
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => NotaPembayaranWidget(
-                                  items: [
-                                    {"nama": "Bed Cover", "qty": 1, "harga": "16.000"},
-                                    {"nama": "Cuci Kering + Lipat", "qty": 4, "harga": "40.000"},
-                                    {"nama": "Kantong Laundry", "qty": 1, "harga": "5.000"},
-                                    {"nama": "Penanganan Khusus", "qty": 1, "harga": "10.000"},
-                                  ],
-                                  total: "71.000",
+                        if (services.isNotEmpty || biayaPenanganan > 0 || biayaKantong > 0)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => NotaPembayaranWidget(
+                                    items: notaItems,
+                                    total: _formatIDR(totalAmount.toInt()),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.labelSuccess,
+                                foregroundColor: AppColors.textWhite,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.labelSuccess,
-                              foregroundColor: AppColors.textWhite,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                elevation: 0,
                               ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              'Cetak Nota',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
+                              child: const Text(
+                                'Cetak Nota',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        if (services.isEmpty && biayaPenanganan == 0 && biayaKantong == 0)
+                          const Text(
+                            "Tidak ada layanan.",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 15,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         const SizedBox(height: 12),
 
                         // Tombol ke Halaman Detail
@@ -152,13 +197,15 @@ class TransaksiSuksesScreen extends StatelessWidget {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => DetailTransaksiScreen(
-                                    kodeTransaksi: orderId,
-                                    tanggalTransaksi: tanggalTransaksi,
-                                    namaCustomer: namaPelanggan,
-                                    alamatCustomer: 'Jl. Makadari Blok ABC',
-                                    nomorHp: '08123456789',
+                                    kodeTransaksi: transactionId,
+                                    tanggalTransaksi: formatDate(transactionDate),
+                                    namaCustomer: customer.name,
+                                    alamatCustomer: customer.address ?? '-',
+                                    nomorHp: customer.phone ?? '-',
                                     statusAwal: StatusTransaksi.antrian,
-                                    statusPembayaran: 'Bayar Nanti',
+                                    statusPembayaran: statusPembayaran == 'paid'
+                                        ? 'Lunas'
+                                        : 'Bayar Nanti',
                                   ),
                                 ),
                               );
@@ -189,7 +236,7 @@ class TransaksiSuksesScreen extends StatelessWidget {
                   // Tombol Buat Nota Baru
                   TextButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.popUntil(context, (route) => route.isFirst);
                     },
                     child: const Text(
                       'Buat Nota Baru',
@@ -216,16 +263,19 @@ class TransaksiSuksesScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+        Flexible(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
+        const SizedBox(width: 8),
+        Flexible(
           child: Text(
             value,
             textAlign: TextAlign.right,
@@ -234,9 +284,18 @@ class TransaksiSuksesScreen extends StatelessWidget {
               fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
+  }
+
+  String _formatIDR(int amount) {
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(amount);
   }
 }

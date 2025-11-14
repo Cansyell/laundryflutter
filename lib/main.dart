@@ -17,6 +17,9 @@ import 'screens/auth/forgot_password_page.dart';
 import 'screens/auth/register_page.dart';
 
 
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -28,7 +31,7 @@ void main() async {
 
   // ✅ Daftarkan controller secara lazy
   Get.lazyPut<LoginController>(() => LoginController());
-
+  await initializeDateFormatting('id_ID', null);
   runApp(const WashInApp());
 }
 
